@@ -1,0 +1,56 @@
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+
+const char* ssid = "...";
+const char* password = "...";
+
+// ★ ここにチャネルアクセストークン（長期）を入れる
+const char* LINE_TOKEN = "..."
+
+void sendLineMessage(String message) {
+  WiFiClientSecure client;
+  client.setInsecure(); // 証明書チェック無効（ESP32定番）
+
+  HTTPClient https;
+  https.begin(client, "https://api.line.me/v2/bot/message/broadcast");
+
+  https.addHeader("Content-Type", "application/json");
+  https.addHeader("Authorization", "Bearer " + String(LINE_TOKEN));
+
+  String body =
+    "{"
+    "\"messages\":["
+      "{"
+        "\"type\":\"text\","
+        "\"text\":\"" + message + "\""
+      "}"
+    "]"
+    "}";
+
+  int httpCode = https.POST(body);
+
+  Serial.print("HTTP Code: ");
+  Serial.println(httpCode);
+
+  https.end();
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi connected!");
+
+  // ★ 起動時に1回だけ通知
+  sendLineMessage("ESP32からテスト通知！");
+}
+
+void loop() {
+  // 何もしない
+}
